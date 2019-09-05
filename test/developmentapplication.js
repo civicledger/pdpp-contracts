@@ -1,14 +1,18 @@
-const DevelopmentApplication = artifacts.require("DevelopmentApplication");
+const DA = artifacts.require("DevelopmentApplication");
 const ethers = require('ethers');
 let contractInstance = null;
 
 contract("Development Application", accounts => {
 
   beforeEach(async () => {
-    contractInstance = await DevelopmentApplication.new(accounts[8], web3.utils.fromAscii('test123'));
+    contractInstance = await DA.new(accounts[8], web3.utils.fromAscii('test123'));
   });
 
   it('should allow a user to set approval', async () => {
+
+    //const approval = await contractInstance.methods.approved().call();
+    console.log(contractInstance.methods.approved.call());
+    //console.log(contractInstance.methods['approved()']);
     //await contractInstance.approveApplication();
     //const approved = await contractInstance.methods.approved().call();
     //console.log(await contractInstance.methods['approved()'].call());
