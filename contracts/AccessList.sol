@@ -15,7 +15,7 @@ contract AccessList {
         return lodgeAccess[_checkAddress];
     }
 
-    function hasApproveAccess(address _checkAddress) public view returns(bool) {
+    function hasApproveAccess(address _checkAddress) external view returns(bool) {
         return approveAccess[_checkAddress];
     }
 
