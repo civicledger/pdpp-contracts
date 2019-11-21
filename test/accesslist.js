@@ -18,6 +18,7 @@ contract("Access List", ([ADMIN, COUNCIL, DEVELOPER]) => {
     contractInstance = signContract(web3Provider, web3Instance, ADMIN);
     await contractInstance.grantLodgeAccess(DEVELOPER);
     await contractInstance.grantApproveAccess(COUNCIL);
+    await contractInstance.grantDocumentAccess(COUNCIL);
   });
 
   it("should confirm a valid lodgement user", async () => {
@@ -78,6 +79,22 @@ contract("Access List", ([ADMIN, COUNCIL, DEVELOPER]) => {
     const hasAccess = await contractInstance.hasApproveAccess(COUNCIL);
     assert.isOk(hadAccess);
     assert.isNotOk(hasAccess);
+  });
+
+  it("should allow admin to set a document user", async () => {
+    const hadAccess = await contractInstance.hasDocumentAccess(DEVELOPER);
+    await contractInstance.grantDocumentAccess(DEVELOPER);
+    const hasAccess = await contractInstance.hasDocumentAccess(DEVELOPER);
+    assert.isNotOk(hadAccess);
+    assert.isOk(hasAccess);
+  });
+
+  it("should allow admin to revoke a document user", async () => {
+    const hadAccess = await contractInstance.hasDocumentAccess(COUNCIL);
+    await contractInstance.revokeDocumentAccess(COUNCIL);
+    const hasAccess = await contractInstance.hasDocumentAccess(COUNCIL);
+    assert.isOk(hadAccess, "Document user should have access prior to revoking");
+    assert.isNotOk(hasAccess, "Document access not revoked");
   });
 
   it("should not allow non-admin address to set an approval user", async () => {

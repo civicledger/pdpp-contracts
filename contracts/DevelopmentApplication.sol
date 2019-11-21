@@ -7,26 +7,31 @@ contract DevelopmentApplication {
     AccessList public accessList;
     bytes32 public applicationId;
 
+    bool public lodged;
+    uint public lodgedTime;
+
     bool public approved;
     uint public approvalTime;
+    string public noticeOfDetermination;
 
     bool public constructionCertificateLodged = false;
     uint public constructionCertificateLodgedTime;
-    bool public constructionCertificateApproved = false;
-    uint public constructionCertificateApprovedTime;
+    bool public constructionCertificateIssued = false;
+    uint public constructionCertificateIssuedTime;
     string public constructionCertificate;
 
     bool public subdivisionCertificateLodged = false;
     uint public subdivisionCertificateLodgedTime;
-    bool public subdivisionCertificateApproved = false;
-    uint public subdivisionCertificateApprovedTime;
+    bool public subdivisionCertificateIssued = false;
+    uint public subdivisionCertificateIssuedTime;
     string public subdivisionCertificate;
 
-    event ApplicationApproved(bytes32 indexed _applicationId, address approvedBy);
+    event ApplicationLodged(bytes32 indexed _applicationId, address lodgedBy);
+    event ApplicationApproved(bytes32 indexed _applicationId, address approvedBy, string noticeOfDetermination);
     event ConstructionCertificateLodged(bytes32 indexed _applicationId, address lodgedBy);
-    event ConstructionCertificateApproved(bytes32 indexed _applicationId, address approvedBy);
+    event ConstructionCertificateIssued(bytes32 indexed _applicationId, address issuedBy, string constructionCertificate);
     event SubdivisionCertificateLodged(bytes32 indexed _applicationId, address lodgedBy);
-    event SubdivisionCertificateApproved(bytes32 indexed _applicationId, address approvedBy);
+    event SubdivisionCertificateIssued(bytes32 indexed _applicationId, address issuedBy, string subdivisionCertificate);
     event DocumentAdded(bytes32 indexed _applicationId, address addedBy, string fileLocation);
     event DocumentModified(bytes32 indexed _applicationId, address modifiedBy, string fileLocation);
 
@@ -35,11 +40,18 @@ contract DevelopmentApplication {
         applicationId = _applicationId;
     }
 
-    function approveApplication() public canApprove {
+    function lodgeApplication() public canLodge {
+        lodged = true;
+        lodgedTime = block.timestamp;
+
+        emit ApplicationLodged(applicationId, msg.sender);
+    }
+
+    function approveApplication(string memory _noticeOfDetermination) public canApprove {
         approved = true;
         approvalTime = block.timestamp;
 
-        emit ApplicationApproved(applicationId, msg.sender);
+        emit ApplicationApproved(applicationId, msg.sender, _noticeOfDetermination);
     }
 
     function lodgeConstructionCertificate() public canLodge {
@@ -50,40 +62,37 @@ contract DevelopmentApplication {
         emit ConstructionCertificateLodged(applicationId, msg.sender);
     }
 
-    function approveConstructionCertificate(string memory _certificateUrl) public canApprove {
-        require(constructionCertificateLodged, "Construction Certificate cannot be approved when it has not been lodged");
+    function issueConstructionCertificate(string memory _certificateUrl) public canApprove {
+        require(constructionCertificateLodged, "Construction Certificate cannot be issued when it has not been lodged");
         require(bytes(_certificateUrl).length > 10, "Construction Certificate URL must be provided");
-        constructionCertificateApproved = true;
-        constructionCertificateApprovedTime = block.timestamp;
+        constructionCertificateIssued = true;
+        constructionCertificateIssuedTime = block.timestamp;
         constructionCertificate = _certificateUrl;
 
-        emit ConstructionCertificateApproved(applicationId, msg.sender);
+        emit ConstructionCertificateIssued(applicationId, msg.sender, _certificateUrl);
     }
 
     function lodgeSubdivisionCertificate() public canLodge {
-        require(constructionCertificateApproved, "Subdivision Certificate cannot be lodged before a Construction Certificate has been approved");
+        require(constructionCertificateIssued, "SC cannot be lodged before a CC has been issued");
         subdivisionCertificateLodged = true;
         subdivisionCertificateLodgedTime = block.timestamp;
 
         emit SubdivisionCertificateLodged(applicationId, msg.sender);
     }
 
-    function approveSubdivisionCertificate(string memory _certificateUrl) public canApprove {
-        require(subdivisionCertificateLodged, "Subdivision Certificate cannot be approved when it has not been lodged");
+    function issueSubdivisionCertificate(string memory _certificateUrl) public canApprove {
+        require(subdivisionCertificateLodged, "SC cannot be issued when it has not been lodged");
         require(bytes(_certificateUrl).length > 10, "Subdivision Certificate URL must be provided");
-        subdivisionCertificateApproved = true;
-        subdivisionCertificateApprovedTime = block.timestamp;
+        subdivisionCertificateIssued = true;
+        subdivisionCertificateIssuedTime = block.timestamp;
         subdivisionCertificate = _certificateUrl;
 
-        emit SubdivisionCertificateApproved(applicationId, msg.sender);
+        emit SubdivisionCertificateIssued(applicationId, msg.sender, _certificateUrl);
     }
 
     function addDocument(string memory _fileUrl) public {
+        require(accessList.hasDocumentAccess(msg.sender), "This user does not have document access.");
         emit DocumentAdded(applicationId, msg.sender, _fileUrl);
-    }
-
-    function modifyDocument(string memory _fileUrl) public {
-        emit DocumentModified(applicationId, msg.sender, _fileUrl);
     }
 
     modifier canApprove() {

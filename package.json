@@ -12,6 +12,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "contract-events": "^2.0.1",
     "ethers": "^4.0.36"
   }
 }
